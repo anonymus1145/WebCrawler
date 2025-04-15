@@ -1,5 +1,34 @@
-const normalizeURL = (urlString: string) => {
+import { JSDOM } from 'jsdom';
 
+
+export const getURLsFromHTML = (htmlBody: string, baseURL: string) => {
+  const urls: string[] = [];
+  const dom = new JSDOM(htmlBody);
+  const linkElements = dom.window.document.querySelectorAll('a');
+
+  for (const element in linkElements) {
+    const anchor = element as unknown as HTMLAnchorElement;
+    if (anchor.href) {
+      try {
+        if (anchor.href.slice(0, 1) === '/') {
+          // relative url
+          const urlObj = new URL(`${baseURL}${anchor.href}`);
+          urls.push(urlObj.href);
+        } else {
+          // absolute url
+          const urlObj = new URL(anchor.href);
+          urls.push(urlObj.href);
+        }
+      } catch (error) {
+        console.error(`Invalid URL: ${anchor.href}`);
+        console.error(error);
+      }
+    }
+  }
+  return urls;
+}
+
+export const normalizeURL = (urlString: string) => {
   const urlObj = new URL(urlString);
   const hostPath = `${urlObj.hostname}${urlObj.pathname}`;
 
@@ -8,5 +37,3 @@ const normalizeURL = (urlString: string) => {
   }
   return hostPath;
 }
-
-export default normalizeURL;
