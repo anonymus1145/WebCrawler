@@ -1,6 +1,15 @@
 import { JSDOM } from 'jsdom';
 
 
+export const crawlPage = async (currentURL: string) => {
+  console.log(`crawling: ${currentURL}`);
+
+  const resp = await fetch(currentURL);
+
+  console.log(await resp.text());
+
+}
+
 export const getURLsFromHTML = (htmlBody: string, baseURL: string) => {
   const urls: string[] = [];
   const dom = new JSDOM(htmlBody);

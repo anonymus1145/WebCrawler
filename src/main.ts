@@ -2,7 +2,17 @@ import * as crawl from "./services/crawl";
 import * as assert from 'assert';
 
 
-const input = 'https://blog.boot.dev/path/'
-const actual = crawl.normalizeURL(input);
+const main = () => {
+  if (process.argv.length < 3 || process.argv.length > 3) {
+    process.argv.length < 3 ? console.log("no website provided")
+      : console.log("to many arguments");
+    process.exit(1);
+  }
+  const baseURL = process.argv[2];
+  console.log(`starting crawl of ${baseURL}`);
 
-assert.strictEqual(actual, 'blog.boot.dev/path');
+  crawl.crawlPage(baseURL);
+
+}
+
+main();
