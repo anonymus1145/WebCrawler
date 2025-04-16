@@ -3,11 +3,24 @@ import { JSDOM } from 'jsdom';
 
 export const crawlPage = async (currentURL: string) => {
   console.log(`crawling: ${currentURL}`);
+  try {
+    const resp = await fetch(currentURL);
 
-  const resp = await fetch(currentURL);
+    if (resp.status > 399) {
+      console.log(`error on crawlPage with status: ${resp.status}`);
+      return;
+    }
 
-  console.log(await resp.text());
+    const contentType = resp.headers.get("content-type");
+    if (!contentType?.includes("text/html")) {
+      console.error(`content type is not html is : ${contentType}`);
+      return;
+    }
 
+    console.log(await resp.text());
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 export const getURLsFromHTML = (htmlBody: string, baseURL: string) => {
