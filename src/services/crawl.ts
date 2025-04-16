@@ -1,26 +1,41 @@
 import { JSDOM } from 'jsdom';
 
 
-export const crawlPage = async (currentURL: string) => {
-  console.log(`crawling: ${currentURL}`);
+export const crawlPage = async (baseURL: string, currentURL: string, pages: { [key: string]: number }) => {
+
+  const baseURLObj = new URL(baseURL);
+  const currentURLObj = new URL(currentURL);
+  if (baseURLObj.hostname !== currentURLObj.hostname) return pages;
+
+  const normalizeCurrentURL = normalizeURL(currentURL);
+  if (normalizeCurrentURL in pages) {
+    pages[normalizeCurrentURL]++;
+    return pages;
+  }
+
+  pages[normalizeCurrentURL] = 1;
+
+  console.log(`crawling: ${currentURL}`, normalizeCurrentURL);
+
   try {
     const resp = await fetch(currentURL);
-
-    if (resp.status > 399) {
-      console.log(`error on crawlPage with status: ${resp.status}`);
-      return;
-    }
-
     const contentType = resp.headers.get("content-type");
-    if (!contentType?.includes("text/html")) {
-      console.error(`content type is not html is : ${contentType}`);
-      return;
+    if (resp.status > 399 || !contentType?.includes("text/html")) {
+      console.log(`error on crawlPage with status: ${resp.status} or content type is not html is : ${contentType}`);
+      return pages;
     }
 
-    console.log(await resp.text());
+    const htmlBody = await resp.text();
+
+    const nextURLs = getURLsFromHTML(htmlBody, baseURL);
+
+    for (const nextURL of nextURLs) {
+      await crawlPage(baseURL, nextURL, pages);
+    }
   } catch (err) {
     console.error(err);
   }
+  return pages;
 }
 
 export const getURLsFromHTML = (htmlBody: string, baseURL: string) => {
@@ -28,7 +43,7 @@ export const getURLsFromHTML = (htmlBody: string, baseURL: string) => {
   const dom = new JSDOM(htmlBody);
   const linkElements = dom.window.document.querySelectorAll('a');
 
-  for (const element in linkElements) {
+  for (const element of linkElements) {
     const anchor = element as unknown as HTMLAnchorElement;
     if (anchor.href) {
       try {
